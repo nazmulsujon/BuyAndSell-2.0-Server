@@ -21,12 +21,21 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const furnitureCategories = client.db("Buy&Sell").collection("furnitureCategories");
+    const furnitureCategoriesCollection = client.db("Buy&Sell").collection("furnitureCategories");
+    const furnitureByCategoryCollection = client.db("Buy&Sell").collection("furnitureByCategory");
 
     app.get("/categories", async (req, res) => {
       const query = {};
-      const result = await furnitureCategories.find(query).toArray();
+      const result = await furnitureCategoriesCollection.find(query).toArray();
       res.send(result);
+    });
+
+    app.get("/category/:id", async (req, res) => {
+      const query = {};
+      const id = req.params.id;
+      const furnitureCategory = await furnitureByCategoryCollection.find(query).toArray();
+      const categoryById = furnitureCategory.filter((category) => category.category_id === id);
+      res.send(categoryById);
     });
   } finally {
   }
