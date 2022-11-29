@@ -19,6 +19,21 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const furnitureCategoriesCollection = client.db("Buy&Sell").collection("furnitureCategories");
@@ -32,7 +47,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/category/:id", async (req, res) => {
+    app.get("/category/:id", verifyJWT, async (req, res) => {
       const query = {};
       const id = req.params.id;
       const furnitureCategory = await furnitureByCategoryCollection.find(query).toArray();
@@ -50,7 +65,7 @@ async function run() {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "10h" });
         return res.send({ accessToken: token });
       }
-      res.send({ accessToken: "" });
+      res.status(403).send({ accessToken: "" });
     });
 
     app.post("/users", async (req, res) => {
