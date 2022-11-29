@@ -41,7 +41,17 @@ async function run() {
     });
 
     //***** jtw API *****//
-    // app.get('/jwt',async)
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      //   console.log(user);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "10h" });
+        return res.send({ accessToken: token });
+      }
+      res.send({ accessToken: "" });
+    });
 
     app.post("/users", async (req, res) => {
       const user = req.body;
