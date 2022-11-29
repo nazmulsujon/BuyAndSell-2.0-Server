@@ -39,6 +39,7 @@ async function run() {
     const furnitureCategoriesCollection = client.db("Buy&Sell").collection("furnitureCategories");
     const furnitureByCategoryCollection = client.db("Buy&Sell").collection("furnitureByCategory");
     const usersCollection = client.db("Buy&Sell").collection("users");
+    const bookingOrdersCollection = client.db("Buy&Sell").collection("bookingOrders");
 
     //******  furniture categories & category API ******//
     app.get("/categories", async (req, res) => {
@@ -71,6 +72,13 @@ async function run() {
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.post("/bookingOrders", async (req, res) => {
+      const order = req.body;
+      const result = await bookingOrdersCollection.insertOne(order);
+      //   console.log(result);
       res.send(result);
     });
   } finally {
