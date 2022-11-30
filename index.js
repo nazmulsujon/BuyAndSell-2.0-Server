@@ -61,7 +61,6 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      //   console.log(user);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: "10h" });
         return res.send({ accessToken: token });
@@ -69,16 +68,28 @@ async function run() {
       res.status(403).send({ accessToken: "" });
     });
 
+    //***** users API *****//
     app.post("/users", async (req, res) => {
       const user = req.body;
+      const query = { email: user.email };
+      const duplicateEmailCount = await usersCollection.countDocuments(query);
+      if (duplicateEmailCount) {
+        return res.status(409).send({ message: "Email is already exist" });
+      }
       const result = await usersCollection.insertOne(user);
       res.send(result);
+    });
+
+    //***** booking orders API *****//
+    app.get("/myOrders", verifyJWT, async (req, res) => {
+      const query = {};
+      const myOrders = await bookingOrdersCollection.find(query).toArray();
+      res.send(myOrders);
     });
 
     app.post("/bookingOrders", async (req, res) => {
       const order = req.body;
       const result = await bookingOrdersCollection.insertOne(order);
-      //   console.log(result);
       res.send(result);
     });
   } finally {
