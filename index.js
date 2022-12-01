@@ -41,6 +41,17 @@ async function run() {
     const usersCollection = client.db("Buy&Sell").collection("users");
     const bookingOrdersCollection = client.db("Buy&Sell").collection("bookingOrders");
 
+    // verifyAdmin API , this API must be written after verifyJWT
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     //******  furniture categories & category API ******//
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -96,14 +107,20 @@ async function run() {
       res.send({ isVerified: seller?.status === "verified" }); // true or false
     });
 
-    app.get("/users/allSellers", verifyJWT, async (req, res) => {
+    app.get("/users/allSellers", verifyJWT, verifyAdmin, async (req, res) => {
       const query = { role: "seller" };
       const result = await usersCollection.find(query).toArray();
-      console.log(result);
+      //   console.log(result);
       res.send(result);
     });
 
-    app.put("/seller/verify/:id", verifyJWT, async (req, res) => {
+    app.get("/users/allBuyers", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = { role: "buyer" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.put("/seller/verify/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
@@ -116,7 +133,13 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/seller/:id", verifyJWT, async (req, res) => {
+    app.delete("/seller/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
+    app.delete("/buyer/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
