@@ -80,6 +80,7 @@ async function run() {
       res.send(result);
     });
 
+    // check isAdmin
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -87,10 +88,31 @@ async function run() {
       res.send({ isAdmin: user?.role === "admin" }); // true or false
     });
 
+    // check isVerified
+    app.get("/seller/verified/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const seller = await usersCollection.findOne(query);
+      res.send({ isVerified: seller?.status === "verified" }); // true or false
+    });
+
     app.get("/users/allSellers", verifyJWT, async (req, res) => {
       const query = { role: "seller" };
       const result = await usersCollection.find(query).toArray();
       console.log(result);
+      res.send(result);
+    });
+
+    app.put("/seller/verify/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          status: "verified",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     });
 
