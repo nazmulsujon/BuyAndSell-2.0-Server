@@ -67,6 +67,34 @@ async function run() {
       res.send(categoryById);
     });
 
+    app.get("/furniture/reported/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = { itemStatus: "reported" };
+      const result = await furnitureByCategoryCollection.find(query).toArray();
+      //   console.log(result);
+      res.send(result);
+    });
+
+    app.put("/furniture/report/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          itemStatus: "reported",
+        },
+      };
+      const result = await furnitureByCategoryCollection.updateOne(filter, updatedDoc, options);
+      //   console.log(result);
+      res.send(result);
+    });
+
+    app.delete("/reportedFurniture/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await furnitureByCategoryCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     //***** jtw API *****//
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
