@@ -40,6 +40,7 @@ async function run() {
     const furnitureByCategoryCollection = client.db("Buy&Sell").collection("furnitureByCategory");
     const usersCollection = client.db("Buy&Sell").collection("users");
     const bookingOrdersCollection = client.db("Buy&Sell").collection("bookingOrders");
+    const advertiseCategoryCollection = client.db("Buy&Sell").collection("advertiseCategory");
 
     // verifyAdmin API , this API must be written after verifyJWT
     const verifyAdmin = async (req, res, next) => {
@@ -77,9 +78,37 @@ async function run() {
       res.send(categoryById);
     });
 
+    app.get("/category/seller/:email", verifyJWT, verifySeller, async (req, res) => {
+      const email = req.params.email;
+      const query = { "seller.email": email };
+      console.log(query);
+      const productByEmail = await furnitureByCategoryCollection.find(query).toArray();
+      console.log(productByEmail);
+      res.send(productByEmail);
+    });
+
+    app.delete("/category/:id", verifyJWT, verifySeller, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await furnitureByCategoryCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     app.post("/category", verifyJWT, verifySeller, async (req, res) => {
-      const product = req.body;
-      const result = await furnitureByCategoryCollection.insertOne(product);
+      const furniture = req.body;
+      const result = await furnitureByCategoryCollection.insertOne(furniture);
+      res.send(result);
+    });
+
+    app.get("/advertiseCategory", async (req, res) => {
+      const query = {};
+      const result = await advertiseCategoryCollection.find(query).limit(3).toArray();
+      res.send(result);
+    });
+
+    app.post("/advertiseCategory", verifyJWT, verifySeller, async (req, res) => {
+      const advertiseFurniture = req.body;
+      const result = await advertiseCategoryCollection.insertOne(advertiseFurniture);
       res.send(result);
     });
 
