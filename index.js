@@ -52,6 +52,16 @@ async function run() {
       next();
     };
 
+    const verifySeller = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "seller") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     //******  furniture categories & category API ******//
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -65,6 +75,12 @@ async function run() {
       const furnitureCategory = await furnitureByCategoryCollection.find(query).toArray();
       const categoryById = furnitureCategory.filter((category) => category.category_id === id);
       res.send(categoryById);
+    });
+
+    app.post("/category", verifyJWT, verifySeller, async (req, res) => {
+      const product = req.body;
+      const result = await furnitureByCategoryCollection.insertOne(product);
+      res.send(result);
     });
 
     app.get("/furniture/reported/:id", verifyJWT, verifyAdmin, async (req, res) => {
@@ -127,6 +143,13 @@ async function run() {
       res.send({ isAdmin: user?.role === "admin" }); // true or false
     });
 
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isSeller: user?.role === "seller" }); // true or false
+    });
+
     // check isVerified
     app.get("/seller/verified/:email", async (req, res) => {
       const email = req.params.email;
@@ -175,8 +198,9 @@ async function run() {
     });
 
     //***** booking orders API *****//
-    app.get("/myOrders", verifyJWT, async (req, res) => {
-      const query = {};
+    app.get("/myOrders/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
       const myOrders = await bookingOrdersCollection.find(query).toArray();
       res.send(myOrders);
     });
